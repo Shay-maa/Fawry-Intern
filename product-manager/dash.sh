@@ -1,0 +1,1 @@
+cp ./target/product-manager.war /media/shaymaa/'New Volume'/apache-tomcat-9.0.89/webapps
