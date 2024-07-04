@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Product Management</title>
+	<script>
+		async function searchProducts(event) {
+			event.preventDefault();
+			const searchTerm = document.getElementById('searchField').value;
+
+			try {
+				const response = await fetch(`/product-manager/api/products?search=${searchTerm}`, {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('response was not ok ' + response.statusText);
+				}
+
+				const products = await response.json();
+				displaySearchResults(products);
+			} catch (error) {
+				alert('Failed to fetch search results: ' + error.message);
+			}
+		}
+
+		function displaySearchResults(products) {
+			const searchResults = document.getElementById('searchResults');
+			searchResults.innerHTML = '';
+
+			if (products.length === 0) {
+				searchResults.innerHTML = '<p>No products found</p>';
+				return;
+			}
+
+			products.forEach(product => {
+				const productItem = document.createElement('div');
+				productItem.className = 'product-item';
+				productItem.innerHTML = `
+                    <h3>${product.productName}</h3>
+                    <p>Price: $${product.productPrice.toFixed(2)}</p>
+                    <p>Description: ${product.productDesc}</p>
+                `;
+				searchResults.appendChild(productItem);
+			});
+		}
+		async function deleteProduct(productId) {
+			try {
+				const response = await fetch(`/product-manager/api/products/${productId}`, {
+					method: 'DELETE',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('Failed to delete product: ' + response.statusText);
+				}
+
+				alert('Product deleted successfully');
+				fetchProducts();
+
+			} catch (error) {
+				console.error('There has been a problem with your fetch operation:', error);
+				alert('Failed to delete product: ' + error.message);
+			}
+		}
+		async function fetchProducts() {
+			try {
+				const response = await fetch('/product-manager/api/products', {
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				});
+
+				if (!response.ok) {
+					throw new Error('response was not ok ' + response.statusText);
+				}
+
+				const products = await response.json();
+				displayProducts(products);
+			} catch (error) {
+				console.error('There has been a problem with your fetch operation:', error);
+				alert('Failed to fetch products: ' + error.message);
+			}
+		}
+
+		function displayProducts(products) {
+			const productList = document.getElementById('productList');
+			productList.innerHTML = ''; // Clear any existing products
+
+			products.forEach(product => {
+				const productItem = document.createElement('div');
+				productItem.className = 'product-item';
+				productItem.innerHTML = `
+                    <h3>${product.productName}</h3>
+                    <p>Price: $${product.productPrice.toFixed(2)}</p>
+                    <p>Description: ${product.productDesc}</p>
+                    <button onclick=deleteProduct(${product.productId})>Delete</button>
+                    <button onclick="openUpdateModal(${product.productId}, '${product.productName}', ${product.productPrice}, '${product.productDesc}')">Update</button>
+                `;
+				productList.appendChild(productItem);
+			});
+		}
+
+		async function addProduct(event) {
+			event.preventDefault(); // Prevent form from submitting the traditional way
+
+			const productName = document.getElementById('productName').value;
+			const productPrice = document.getElementById('productPrice').value;
+			const productDesc = document.getElementById('productDesc').value;
+
+			const product = {
+				productName: productName,
+				productPrice: parseFloat(productPrice),
+				productDesc: productDesc
+			};
+			try {
+				const response = await fetch('/product-manager/api/products', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(product)
+				});
+
+				if (!response.ok) {
+					throw new Error('Network response was not ok ' + response.statusText);
+				}
+
+				const createdProduct = await response.json();
+				alert('Product added successfully with ID: ' + createdProduct.productId);
+				document.getElementById('addProductForm').reset();
+				fetchProducts(); // Fetch and display the updated list of products
+			} catch (error) {
+				console.error('There has been a problem with your fetch operation:', error);
+				alert('Failed to add product: ' + error.message);
+			}
+		}
+		function openUpdateModal(productId, productName, productPrice, productDesc) {
+			document.getElementById('updateProductId').value = productId;
+			document.getElementById('updateProductName').value = productName;
+			document.getElementById('updateProductPrice').value = productPrice;
+			document.getElementById('updateProductDesc').value = productDesc;
+			document.getElementById('updateModal').style.display = 'block';
+		}
+
+		function closeUpdateModal() {
+			document.getElementById('updateModal').style.display = 'none';
+		}
+
+		async function updateProduct(event) {
+			event.preventDefault(); // Prevent form from submitting the traditional way
+
+			const productId = document.getElementById('updateProductId').value;
+			const productName = document.getElementById('updateProductName').value;
+			const productPrice = document.getElementById('updateProductPrice').value;
+			const productDesc = document.getElementById('updateProductDesc').value;
+
+			const updatedProduct = {
+				productName: productName,
+				productPrice: parseFloat(productPrice),
+				productDesc: productDesc
+			};
+			try {
+				const response = await fetch(`/product-manager/api/products/${productId}`, {
+					method: 'PUT',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					body: JSON.stringify(updatedProduct)
+				});
+				if (!response.ok) {
+					throw new Error('Failed to update product: ' + response.statusText);
+				}
+				alert('Product updated successfully');
+				closeUpdateModal(); // Close the modal after successful update
+				fetchProducts(); // Fetch and display the updated list of products
+			} catch (error) {
+				console.error('There has been a problem with your fetch operation:', error);
+				alert('Failed to update product: ' + error.message);
+			}
+		}
+
+		// Fetch products when the page loads
+		window.onload = fetchProducts;
+	</script>
+	<style>
+		.product-item {
+			border: 1px solid #ddd;
+			padding: 10px;
+			margin: 10px 0;
+		}
+		/* Modal styles */
+		.modal {
+			display: none;
+			position: fixed;
+			z-index: 1;
+			left: 0;
+			top: 0;
+			width: 100%;
+			height: 80%;
+			overflow: auto;
+		}
+		.modal-content {
+			margin: 15% auto;
+			padding: 20px;
+			width: 60%;
+		}
+		.close {
+			color: #aaa;
+			float: right;
+			font-size: 28px;
+			font-weight: bold;
+		}
+		.close:hover,
+		.close:focus {
+			color: black;
+			text-decoration: none;
+			cursor: pointer;
+		}
+	</style>
+</head>
+<body>
+<h1>Product Management</h1>
+
+<form id="searchForm" onsubmit="searchProducts(event)">
+	<label for="searchField">Search:</label>
+	<input type="text" id="searchField" name="searchField" required>
+	<button type="submit">Search</button>
+</form>
+<div id="searchResults">
+	<!-- Search results will be displayed here -->
+</div>
+<h2>Add Product</h2>
+<form id="addProductForm" onsubmit="addProduct(event)">
+	<label for="productName">Product Name:</label>
+	<input type="text" id="productName" name="productName" required>
+	<br>
+
+	<label for="productPrice">Product Price:</label>
+	<input type="number" id="productPrice" name="productPrice" step="0.01" required>
+	<br>
+
+	<label for="productDesc">Product Description:</label>
+	<textarea id="productDesc" name="productDesc" required></textarea>
+	<br>
+
+	<button type="submit">Add Product</button>
+</form>
+
+<h2>Product List</h2>
+<div id="productList">
+</div>
+<div id="updateModal" class="modal">
+	<div class="modal-content">
+		<span class="close" onclick="closeUpdateModal()">&times;</span>
+		<h2>Update Product</h2>
+		<form id="updateProductForm" onsubmit="updateProduct(event)">
+			<input type="hidden" id="updateProductId">
+			<label for="updateProductName">Product Name:</label>
+			<input type="text" id="updateProductName" name="productName" required>
+			<br>
+			<label for="updateProductPrice">Product Price:</label>
+			<input type="number" id="updateProductPrice" name="productPrice" step="0.01" required>
+			<br>
+			<label for="updateProductDesc">Product Description:</label>
+			<textarea id="updateProductDesc" name="productDesc" required></textarea>
+			<br>
+			<button type="submit">Update Product</button>
+		</form>
+	</div>
+</div>
+</body>
+</html>
