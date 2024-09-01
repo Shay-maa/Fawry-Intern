@@ -1,0 +1,68 @@
+<div class="mt-3 ">
+    <div class="container text-center">
+        <br>
+        <h2>{{header}}&nbsp;&nbsp; <i class="bi bi-pen"></i> </h2>
+        <br>
+        <div class="input-group mb-3 ">
+            <input type="text" class="form-control form-control-lg" placeholder="Today's Task" aria-label="Recipient's username" [(ngModel)]="title">
+            <button class="btn btn-outline-secondary" type="button"  (click)="addTask(title)">Add Task</button>
+        </div>
+
+      <table class="table">
+        <thead>
+            <tr>
+            <th scope="col">Task</th>
+            <th scope="col">Completed</th>
+            <th scope="col">Action</th>
+            </tr>
+        </thead>
+        <tbody class="table-group-divider">
+            @for (item of tasks; track $index) {
+                @if (item.title !== "") {
+            <tr>
+                @if(item.completed){
+                <td class ="completed">{{item.title}}</td>
+                }@else {
+                    <td class ="uncompleted">{{item.title}}</td>
+                }
+            <td><input class="form-check-input " type="checkbox" (click)="completeTask(item.id)"/></td>
+            <td>
+                <button type="button" class="btn btn-outline" data-bs-toggle="modal" data-bs-target="#editModal" (click)="setId(item.id)">
+                <i class="bi bi-pencil-fill"></i>
+                </button>
+                &nbsp;&nbsp; &nbsp;
+                    <button type="button" class="btn btn-outline" (click)="deleteTask(item.id)">
+                    <i class="bi bi-trash-fill"></i>
+                </button>
+            </td>
+            </tr>
+            }
+        }
+        </tbody>
+    </table>
+
+
+<!-- Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Task</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+         <input type="text" class="form-control form-control-lg" placeholder="Edit Your Task" aria-label="Recipient's username" [(ngModel)]="newTitle">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-outline" (click)="editTask(newTitle)" data-bs-dismiss="modal">Save changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+    </div>
+
+
+
+</div>
